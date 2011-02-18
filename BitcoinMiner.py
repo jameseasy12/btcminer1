@@ -1,4 +1,6 @@
+import os
 import sys
+import time as systime
 import socket
 import httplib
 import traceback
@@ -118,11 +120,15 @@ def if_else(condition, trueVal, falseVal):
 		return falseVal
 
 class BitcoinMiner(Thread):
-	def __init__(self, platform, device, host, user, password, port=8332, frames=30, rate=1, askrate=5, worksize=-1, vectors=False, verbose=False):
+	def __init__(self, platform, device, host, user, password, port=8332, frames=30, rate=1, askrate=5, worksize=-1, vectors=False, verbose=False, logger=None):		
 		Thread.__init__(self)
 		(defines, self.rateDivisor) = if_else(vectors, ('-DVECTORS', 500), ('', 1000))
 		defines += (' -DOUTPUT_SIZE=' + str(OUTPUT_SIZE))
 		defines += (' -DOUTPUT_MASK=' + str(OUTPUT_SIZE - 1))
+		
+		self.logger = logger
+		self._hashratelast = 0 
+		self._hashrateinterval = 30
 
 		self.context = cl.Context([device], None, None)
 		self.rate = float(rate)
@@ -165,17 +171,23 @@ class BitcoinMiner(Thread):
 		self.say(format, args)
 
 	def hashrate(self, rate):
+		if self.logger and systime.time() - self._hashratelast > self._hashrateinterval:
+			self._hashratelast = systime.time()
+			self.logger.info('%s khash/s' % (rate,))
 		self.say('%s khash/s', rate)
 
 	def failure(self, message):
 		self.sayLine(message)
+		self.logger and self.logger.warn(message)
 
 	def diff1Found(self, hash, target):
 		if self.verbose and target < 0xfffff000L:
 			self.sayLine('checking %s <= %s', (hash, target))
+			self.logger and self.logger.info('checking %s <= %s' % (hash, target))
 
 	def blockFound(self, hash, accepted):
 		self.sayLine('%s, %s', (hash, if_else(accepted, 'accepted', 'invalid or stale')))
+		self.logger and self.logger.info( '%s, %s' % (hash, if_else(accepted, 'accepted', 'invalid or stale')) )
 
 	def getwork(self, data=None):
 		result = response = None
@@ -188,12 +200,14 @@ class BitcoinMiner(Thread):
 			result = loads(response.read())
 			if result['error']:
 				self.say(result['error']['message'])
+				self.logger and self.logger.warn( result['error']['message'] )
 				result = None
 			else:
 				result = result['result']
 			return result
 		except (IOError, httplib.HTTPException, ValueError):
 			self.say('Problems communicating with bitcoin RPC')
+			self.logger and self.logger.warn( 'Problems communicating with bitcoin RPC' )
 		finally:
 			if not result or not response or response.getheader('connection', '') != 'keep-alive':
 				self.connection.close()
@@ -234,10 +248,12 @@ class BitcoinMiner(Thread):
 						result = None
 			except KeyboardInterrupt:
 				print '\nbye'
+				self.logger and self.logger.info("Miner stopping (pid = %s)" % (os.getpid(),))
 				self.workQueue.put('stop')
 				sleep(1.1)
 				break
-			except:
+			except Exception as e:
+				self.logger and self.logger.error("%s: %s" % (type(e),str(e)))
 				self.sayLine("Unexpected error:")
 				traceback.print_exc()
 
@@ -256,6 +272,8 @@ class BitcoinMiner(Thread):
 		f = np.zeros(8, np.uint32)
 		output = np.zeros(OUTPUT_SIZE+1, np.uint32)
 		output_buf = cl.Buffer(self.context, cl.mem_flags.WRITE_ONLY | cl.mem_flags.USE_HOST_PTR, hostbuf=output)
+
+		self.logger and self.logger.info("Miner starting (pid = %s)" % (os.getpid(),))
 
 		work = None
 		while True:
@@ -276,6 +294,7 @@ class BitcoinMiner(Thread):
 						(target[0], target[1]) = (uint32(0xFFFF0000), 0)
 					except Exception as e:
 						self.sayLine('Wrong data format from RPC!')
+						self.logger and self.logger.error('Wrong data format from RPC!')
 						sys.exit()
 					state2 = np.array(state)
 					for i in xrange(3):
