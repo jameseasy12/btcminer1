@@ -4,6 +4,7 @@ import time as systime
 import socket
 import httplib
 import traceback
+import subprocess
 import numpy as np
 import pyopencl as cl
 
@@ -120,7 +121,7 @@ def if_else(condition, trueVal, falseVal):
 		return falseVal
 
 class BitcoinMiner(Thread):
-	def __init__(self, platform, device, host, user, password, port=8332, frames=30, rate=1, askrate=5, worksize=-1, vectors=False, verbose=False, logger=None):		
+	def __init__(self, platform, device, host, user, password, port=8332, frames=30, rate=1, askrate=5, worksize=-1, vectors=False, verbose=False, logger=None, hashrateinterval=30, blkfound=None):		
 		Thread.__init__(self)
 		(defines, self.rateDivisor) = if_else(vectors, ('-DVECTORS', 500), ('', 1000))
 		defines += (' -DOUTPUT_SIZE=' + str(OUTPUT_SIZE))
@@ -128,7 +129,8 @@ class BitcoinMiner(Thread):
 		
 		self.logger = logger
 		self._hashratelast = 0 
-		self._hashrateinterval = 30
+		self._hashrateinterval = hashrateinterval
+		self.blkfound = blkfound
 
 		self.context = cl.Context([device], None, None)
 		self.rate = float(rate)
@@ -188,6 +190,7 @@ class BitcoinMiner(Thread):
 	def blockFound(self, hash, accepted):
 		self.sayLine('%s, %s', (hash, if_else(accepted, 'accepted', 'invalid or stale')))
 		self.logger and self.logger.info( '%s, %s' % (hash, if_else(accepted, 'accepted', 'invalid or stale')) )
+		self.blkfound and subprocess.Popen([self.blkfound, hash, (accepted and 'accepted' or 'invalid_or_stale')])
 
 	def getwork(self, data=None):
 		result = response = None

@@ -16,6 +16,8 @@ parser.add_option('-a', '--askrate',  dest='askrate',  default=5,           help
 parser.add_option('-w', '--worksize', dest='worksize', default=-1,          help='work group size, default is maximum returned by opencl', type='int')
 parser.add_option('-v', '--vectors',  dest='vectors',  action='store_true', help='use vectors')
 parser.add_option('-l', '--logfile',  dest='logfile',  default=None,        help='log filename')
+parser.add_option('--hrint',    	  dest='hrinterval', default=30,        help='how many seconds between logfile writes of hash rate, default 30', type='int')
+parser.add_option('--blkfound', 	  dest='blkfound', default=None,        help='command to run when a block is found')
 parser.add_option('--verbose',        dest='verbose',  action='store_true', help='verbose output, suitable for redirection to log file')
 (options, args) = parser.parse_args()
 
@@ -50,5 +52,7 @@ myMiner = BitcoinMiner(	platform,
 						options.worksize,
 						options.vectors,
 						options.verbose,
-						options.logfile and logger or None)
+						options.logfile and logger or None,
+						options.hrinterval,
+						options.blkfound)
 myMiner.mine()
