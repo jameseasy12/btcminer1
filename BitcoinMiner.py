@@ -129,6 +129,7 @@ class BitcoinMiner(Thread):
 		
 		self.logger = logger
 		self._hashratelast = 0 
+		self._lasthashrate = 0
 		self._hashrateinterval = hashrateinterval
 		self.blkfound = blkfound
 
@@ -173,9 +174,11 @@ class BitcoinMiner(Thread):
 		self.say(format, args)
 
 	def hashrate(self, rate):
-		if self.logger and systime.time() - self._hashratelast > self._hashrateinterval:
+		# If we have a logger, log the hash rate every HashRateInterval seconds or when it changes by more than 8%
+		if self.logger and (systime.time() - self._hashratelast > self._hashrateinterval or abs(self._lasthashrate - rate) > 0.08 * rate):
 			self._hashratelast = systime.time()
 			self.logger.info('%s khash/s' % (rate,))
+			self._lasthashrate = rate
 		self.say('%s khash/s', rate)
 
 	def failure(self, message):
