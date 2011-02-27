@@ -187,10 +187,10 @@ class BitcoinMiner(Thread):
 			self.sayLine('checking %s <= %s', (hash, target))
 			self.logger and self.logger.info('checking %s <= %s' % (hash, target))
 
-	def blockFound(self, hash, accepted):
-		self.sayLine('%s, %s', (hash, if_else(accepted, 'accepted', 'invalid or stale')))
-		self.logger and self.logger.info( '%s, %s' % (hash, if_else(accepted, 'accepted', 'invalid or stale')) )
-		self.blkfound and subprocess.Popen([self.blkfound, hash, (accepted and 'accepted' or 'invalid_or_stale')])
+	def blockFound(self, hash, accepted, diff=0):
+		self.sayLine('%s, %s (diff %.2f)', (hash, if_else(accepted, 'accepted', 'invalid or stale'), diff))
+		self.logger and self.logger.info( '%s, %s (diff %.2f)' % (hash, if_else(accepted, 'accepted', 'invalid or stale'), diff) )
+		self.blkfound and subprocess.Popen([self.blkfound, hash, (accepted and 'accepted' or 'invalid_or_stale'), 'diff:', '%.2f' % (diff,)])
 
 	def getwork(self, data=None):
 		result = response = None
@@ -225,6 +225,7 @@ class BitcoinMiner(Thread):
 			try:
 				if not work:
 					work = self.getwork()
+					
 
 				try:
 					result = self.resultQueue.get(True, 1)
@@ -246,8 +247,9 @@ class BitcoinMiner(Thread):
 									if bytereverse(G) <= result['target']:
 										result['work']['data'] = result['work']['data'][:152] + pack('I', long(result['output'][i])).encode('hex') + result['work']['data'][160:]
 										accepted = self.getwork(result['work']['data'])
+										diff = (0xffff * 16**52) / float(int(''.join(reversed([result['work']['target'][2*i:2*i+2] for i in xrange(len(result['work']['target'])/2)])),16))
 										if accepted != None:
-											self.blockFound(pack('I', long(G)).encode('hex'), accepted)
+											self.blockFound(pack('I', long(G)).encode('hex'), accepted, diff)
 						result = None
 			except KeyboardInterrupt:
 				print '\nbye'
