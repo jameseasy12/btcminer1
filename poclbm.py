@@ -45,7 +45,6 @@ if (options.device == -1 or options.device >= len(devices)):
 		print '[%d]\t%s' % (i, devices[i].name)
 	sys.exit()
 
-<<<<<<< HEAD
 if options.logfile:
 	import logging
 	logger = logging.getLogger('bcm')
@@ -56,36 +55,23 @@ if options.logfile:
 	ch.setFormatter(formatter)
 	logger.addHandler(ch)
 
-myMiner = BitcoinMiner(	platform,
-						devices[options.device],
-						options.host,
-						options.user,
-						options.password,
-						options.port,
-						options.frames,
-						options.rate,
-						options.askrate,
-						options.worksize,
-						options.vectors,
-						options.verbose,
-						options.logfile and logger or None,
-						options.hrinterval,
-						options.blkfound)
-myMiner.mine()
-=======
 miner = None
 try:
 	miner = BitcoinMiner(	devices[options.device],
-							options.host,
-							options.user,
-							options.password,
-							options.port,
-							options.frames,
-							options.rate,
-							options.askrate,
-							options.worksize,
-							options.vectors,
-							options.verbose)
+				options.host,
+				options.user,
+				options.password,
+				options.port,
+				options.frames,
+				options.rate,
+				options.askrate,
+				options.worksize,
+				options.vectors,
+				options.verbose,
+				options.logfile and logger or None,
+				options.hrinterval,
+				options.blkfound )
+
 	miner.mine()
 except KeyboardInterrupt:
 	print '\nbye'
@@ -93,4 +79,4 @@ except SystemExit:
 	pass
 finally:
 	if miner: miner.exit()
->>>>>>> 66c0ec04c6b2c96f31b9946357ebe53caf45537d
+
