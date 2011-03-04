@@ -8,7 +8,7 @@ parser = OptionParser(version=USER_AGENT)
 parser.add_option('-u', '--user',     dest='user',     default='bitcoin',   help='user name')
 parser.add_option('--pass',	          dest='password', default='password',  help='password')
 parser.add_option('-o', '--host',     dest='host',     default='127.0.0.1', help='RPC host (without \'http://\')')
-parser.add_option('-p', '--port',     dest='port',     default='8332',      help='RPC port')
+parser.add_option('-p', '--port',     dest='port',     default='8332',      help='RPC port', type='int')
 parser.add_option('-r', '--rate',     dest='rate',     default=1,           help='hash rate display interval in seconds, default=1', type='float')
 parser.add_option('-f', '--frames',   dest='frames',   default=30,          help='will try to bring single kernel execution to 1/frames seconds, default=30, increase this for less desktop lag', type='float')
 parser.add_option('-d', '--device',   dest='device',   default=-1,          help='use device by id, by default asks for device', type='int')
@@ -19,17 +19,33 @@ parser.add_option('-l', '--logfile',  dest='logfile',  default=None,        help
 parser.add_option('--hrint',    	  dest='hrinterval', default=30,        help='how many seconds between logfile writes of hash rate, default 30', type='int')
 parser.add_option('--blkfound', 	  dest='blkfound', default=None,        help='command to run when a block is found')
 parser.add_option('--verbose',        dest='verbose',  action='store_true', help='verbose output, suitable for redirection to log file')
+parser.add_option('--platform',       dest='platform', default=-1,          help='use platform by id', type='int')
 (options, args) = parser.parse_args()
 
-platform = cl.get_platforms()[0]
-devices = platform.get_devices()
+if not -1 < options.port < 0xFFFF:
+	print 'invalid port'
+	sys.exit()
 
+platforms = cl.get_platforms()
+
+
+if options.platform >= len(platforms) or (options.platform == -1 and len(platforms) > 1):
+	print 'Wrong platform or more than one OpenCL platforms found, use --platform to select one of the following\n'
+	for i in xrange(len(platforms)):
+		print '[%d]\t%s' % (i, platforms[i].name)
+	sys.exit()
+
+if options.platform == -1:
+	options.platform = 0
+
+devices = platforms[options.platform].get_devices()
 if (options.device == -1 or options.device >= len(devices)):
 	print 'No device specified or device not found, use -d to specify one of the following\n'
 	for i in xrange(len(devices)):
 		print '[%d]\t%s' % (i, devices[i].name)
 	sys.exit()
 
+<<<<<<< HEAD
 if options.logfile:
 	import logging
 	logger = logging.getLogger('bcm')
@@ -56,3 +72,25 @@ myMiner = BitcoinMiner(	platform,
 						options.hrinterval,
 						options.blkfound)
 myMiner.mine()
+=======
+miner = None
+try:
+	miner = BitcoinMiner(	devices[options.device],
+							options.host,
+							options.user,
+							options.password,
+							options.port,
+							options.frames,
+							options.rate,
+							options.askrate,
+							options.worksize,
+							options.vectors,
+							options.verbose)
+	miner.mine()
+except KeyboardInterrupt:
+	print '\nbye'
+except SystemExit:
+	pass
+finally:
+	if miner: miner.exit()
+>>>>>>> 66c0ec04c6b2c96f31b9946357ebe53caf45537d

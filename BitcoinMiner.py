@@ -8,6 +8,7 @@ import subprocess
 import numpy as np
 import pyopencl as cl
 
+from hashlib import md5
 from base64 import b64encode
 from threading import Thread
 from time import sleep, time
@@ -16,7 +17,7 @@ from datetime import datetime
 from Queue import Queue, Empty
 from struct import pack, unpack
 
-VERSION = '201102.beta'
+VERSION = '201103.beta'
 
 USER_AGENT = 'poclbm/' + VERSION
 
@@ -57,23 +58,10 @@ def sharound(a,b,c,d,e,f,g,h,x,K):
 	return (uint32(d + t1), uint32(t1+t2))
 
 def hash(midstate, data0, data1, data2, nonce):
-	work[0]=data0
-	work[1]=data1
-	work[2]=data2
-	work[3]=nonce
-	work[4]=0x80000000
-	work[5]=0x00000000
-	work[6]=0x00000000
-	work[7]=0x00000000
-	work[8]=0x00000000
-	work[9]=0x00000000
-	work[10]=0x00000000
-	work[11]=0x00000000
-	work[12]=0x00000000
-	work[13]=0x00000000
-	work[14]=0x00000000
-	work[4]=0x80000000
-	work[15]=0x00000280
+	work[0]=data0; work[1]=data1; work[2]=data2; work[3]=nonce
+	work[4]=0x80000000; work[5]=0x00000000; work[6]=0x00000000; work[7]=0x00000000
+	work[8]=0x00000000; work[9]=0x00000000; work[10]=0x00000000; work[11]=0x00000000
+	work[12]=0x00000000; work[13]=0x00000000; work[14]=0x00000000; work[15]=0x00000280
 	state = np.copy(midstate)
 
 	for i in xrange(64):
@@ -81,31 +69,13 @@ def hash(midstate, data0, data1, data2, nonce):
 			work[i] = R(work[i-2], work[i-7], work[i-15], work[i-16])
 		(state[~(i-4)&7], state[~(i-8)&7]) = sharound(state[(~(i-1)&7)],state[~(i-2)&7],state[~(i-3)&7],state[~(i-4)&7],state[~(i-5)&7],state[~(i-6)&7],state[~(i-7)&7],state[~(i-8)&7],work[i],K[i])
 
-	work[0]=midstate[0]+state[0]
-	work[1]=midstate[1]+state[1]
-	work[2]=midstate[2]+state[2]
-	work[3]=midstate[3]+state[3]
-	work[4]=midstate[4]+state[4]
-	work[5]=midstate[5]+state[5]
-	work[6]=midstate[6]+state[6]
-	work[7]=midstate[7]+state[7]
-	work[8]=0x80000000
-	work[9]=0x00000000
-	work[10]=0x00000000
-	work[11]=0x00000000
-	work[12]=0x00000000
-	work[13]=0x00000000
-	work[14]=0x00000000
-	work[15]=0x00000100
+	work[0]=midstate[0]+state[0]; work[1]=midstate[1]+state[1]; work[2]=midstate[2]+state[2]; work[3]=midstate[3]+state[3]
+	work[4]=midstate[4]+state[4]; work[5]=midstate[5]+state[5]; work[6]=midstate[6]+state[6]; work[7]=midstate[7]+state[7]
+	work[8]=0x80000000; work[9]=0x00000000; work[10]=0x00000000; work[11]=0x00000000;
+	work[12]=0x00000000; work[13]=0x00000000; work[14]=0x00000000; work[15]=0x00000100
 
-	state[0]=0x6a09e667
-	state[1]=0xbb67ae85
-	state[2]=0x3c6ef372
-	state[3]=0xa54ff53a
-	state[4]=0x510e527f
-	state[5]=0x9b05688c
-	state[6]=0x1f83d9ab
-	state[7]=0x5be0cd19
+	state[0]=0x6a09e667; state[1]=0xbb67ae85; state[2]=0x3c6ef372; state[3]=0xa54ff53a
+	state[4]=0x510e527f; state[5]=0x9b05688c; state[6]=0x1f83d9ab; state[7]=0x5be0cd19
 
 	for i in xrange(62):
 		if i > 15:
@@ -121,7 +91,7 @@ def if_else(condition, trueVal, falseVal):
 		return falseVal
 
 class BitcoinMiner(Thread):
-	def __init__(self, platform, device, host, user, password, port=8332, frames=30, rate=1, askrate=5, worksize=-1, vectors=False, verbose=False, logger=None, hashrateinterval=30, blkfound=None):		
+	def __init__(self, device, host, user, password, port=8332, frames=30, rate=1, askrate=5, worksize=-1, vectors=False, verbose=False, logger=None, hashrateinterval=30, blkfound=None):		
 		Thread.__init__(self)
 		(defines, self.rateDivisor) = if_else(vectors, ('-DVECTORS', 500), ('', 1000))
 		defines += (' -DOUTPUT_SIZE=' + str(OUTPUT_SIZE))
@@ -145,8 +115,21 @@ class BitcoinMiner(Thread):
 			defines += ' -DBITALIGN'
 
 		kernelFile = open('BitcoinMiner.cl', 'r')
-		self.miner = cl.Program(self.context, kernelFile.read()).build(defines)
+		kernel = kernelFile.read()
 		kernelFile.close()
+		m = md5(); m.update(''.join([device.platform.name, device.platform.version, device.name, defines, kernel]))
+		cacheName = '%s.elf' % m.hexdigest()
+		binary = None
+		try:
+			binary = open(cacheName, 'rb')
+			self.miner = cl.Program(self.context, [device], [binary.read()]).build(defines)
+		except (IOError, cl.LogicError):
+			self.miner = cl.Program(self.context, kernel).build(defines)
+			binaryW = open(cacheName, 'wb')
+			binaryW.write(self.miner.binaries[0])
+			binaryW.close()
+		finally:
+			if binary: binary.close()
 
 		if (self.worksize == -1):
 			self.worksize = self.miner.search.get_work_group_info(cl.kernel_work_group_info.WORK_GROUP_SIZE, self.context.devices[0])
@@ -165,13 +148,17 @@ class BitcoinMiner(Thread):
 		if self.verbose:
 			print '%s,' % datetime.now().strftime(TIME_FORMAT), format % args
 		else:
-			sys.stdout.write('\r                                                            \r' + format % args)
-			sys.stdout.flush()
+			sys.stdout.write('\r                                                            \r%s' % (format % args))
+		sys.stdout.flush()
 
 	def sayLine(self, format, args=()):
 		if not self.verbose:
 			format = '%s, %s\n' % (datetime.now().strftime(TIME_FORMAT), format)
 		self.say(format, args)
+
+	def exit(self):
+		self.workQueue.put('stop')
+		sleep(1.1)
 
 	def hashrate(self, rate):
 		# If we have a logger, log the hash rate every HashRateInterval seconds or when it changes by more than 8%
@@ -183,7 +170,9 @@ class BitcoinMiner(Thread):
 
 	def failure(self, message):
 		self.sayLine(message)
-		self.logger and self.logger.warn(message)
+		self.logger and self.logger.error(message)
+		print '\n%s' % message
+		sys.exit()
 
 	def diff1Found(self, hash, target):
 		if self.verbose and target < 0xfffff000L:
@@ -203,6 +192,8 @@ class BitcoinMiner(Thread):
 			self.postdata['params'] = if_else(data, [data], [])
 			self.connection.request("POST", "/", dumps(self.postdata), self.headers)
 			response = self.connection.getresponse()
+			if response.status == httplib.UNAUTHORIZED:
+				self.failure('Wrong username or password')
 			result = loads(response.read())
 			if result['error']:
 				self.say(result['error']['message'])
@@ -215,7 +206,7 @@ class BitcoinMiner(Thread):
 			self.say('Problems communicating with bitcoin RPC')
 			self.logger and self.logger.warn( 'Problems communicating with bitcoin RPC' )
 		finally:
-			if not result or not response or response.getheader('connection', '') != 'keep-alive':
+			if self.connection and (not result or not response or response.getheader('connection', '') != 'keep-alive'):
 				self.connection.close()
 				self.connection = None
 
@@ -254,6 +245,7 @@ class BitcoinMiner(Thread):
 										if accepted != None:
 											self.blockFound(pack('I', long(G)).encode('hex'), accepted, diff)
 						result = None
+
 			except KeyboardInterrupt:
 				print '\nbye'
 				self.logger and self.logger.info("Miner stopping (pid = %s)" % (os.getpid(),))
@@ -262,8 +254,7 @@ class BitcoinMiner(Thread):
 				break
 			except Exception as e:
 				self.logger and self.logger.error("%s: %s" % (type(e),str(e)))
-				self.sayLine("Unexpected error:")
-				traceback.print_exc()
+				self.logger.error(traceback.format_exc())
 
 	def run(self):
 		frame = float(1)/float(self.frames)
@@ -295,15 +286,12 @@ class BitcoinMiner(Thread):
 						continue
 					elif work == 'stop':
 						return
-					try:
-						data   = np.array(unpack('IIIIIIIIIIIIIIII', work['data'][128:].decode('hex')), dtype=np.uint32)
-						state  = np.array(unpack('IIIIIIII',         work['midstate'].decode('hex')),   dtype=np.uint32)
-						target = np.array(unpack('IIIIIIII',         work['target'].decode('hex')),     dtype=np.uint32)
-						(target[0], target[1]) = (uint32(0xFFFF0000), 0)
-					except Exception as e:
-						self.sayLine('Wrong data format from RPC!')
-						self.logger and self.logger.error('Wrong data format from RPC!')
-						sys.exit()
+
+					data   = np.array(unpack('IIIIIIIIIIIIIIII', work['data'][128:].decode('hex')), dtype=np.uint32)
+					state  = np.array(unpack('IIIIIIII',         work['midstate'].decode('hex')),   dtype=np.uint32)
+					target = np.array(unpack('IIIIIIII',         work['target'].decode('hex')),     dtype=np.uint32)
+					(target[0], target[1]) = (uint32(0xFFFF0000), 0)
+
 					state2 = np.array(state)
 					for i in xrange(3):
 						(state2[~(i-4)&7], state2[~(i-8)&7]) = sharound(state2[(~(i-1)&7)],state2[~(i-2)&7],state2[~(i-3)&7],state2[~(i-4)&7],state2[~(i-5)&7],state2[~(i-6)&7],state2[~(i-7)&7],state2[~(i-8)&7],data[i],K[i])
