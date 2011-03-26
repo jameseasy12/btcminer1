@@ -3,6 +3,7 @@ import sys
 import socket
 import httplib
 import traceback
+import subprocess
 import time as timemodule
 
 import pyopencl as cl
