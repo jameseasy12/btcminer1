@@ -18,14 +18,12 @@ class StatusFile(object):
 		if self.startTime == None:
 			self.startTime = time.time()
 
-		# Build file path and try to make directory
+		# Build file path
 		if path:
 			self.path = path
 		else:
 			self.path = PATH_STRING.format(pid=self.pid,time=self.startTime,name=self.programName)
-		parentdir = os.path.split(self.path)[0]
-		if parentdir and not os.path.exists(parentdir):
-			os.mkdir(parentdir)
+		self.path = os.path.abspath(self.path)
 
 		# Files to write and read
 		self.writeFile = None

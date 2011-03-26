@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os,sys
 import pyopencl as cl
 from time import sleep
 from BitcoinMiner import *
@@ -63,7 +64,7 @@ statushandler = None
 if options.statusfile:
 	from statusfile import *
 	statushandler = StatusFile(path=options.statusfile)
-	statushandler.update('Logfile',options.logfile)
+	statushandler.update('Logfile',os.path.abspath(options.logfile) if options.logfile else None)
 
 miner = None
 try:
