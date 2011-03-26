@@ -3,6 +3,7 @@ import sys
 import socket
 import httplib
 import traceback
+import time as timemodule
 
 import pyopencl as cl
 
@@ -128,7 +129,7 @@ class BitcoinMiner():
 			self.sayLine('checking %s <= %s', (hash, target))
 
 	def blockFound(self, hash, accepted, diff=0):
-		self.statushandler and self.statushandler.update('LastBlockFound',time.time())
+		self.statushandler and self.statushandler.update('LastBlockFound',timemodule.time())
 		self.blkfound and subprocess.Popen(('%s %s %s diff %.2f' % (self.blkfound,hash,accepted and 'accepted' or 'invalid_or_stale',diff)).split(' '))
 		self.sayLine('%s, %s (diff = %.2f)', (hash, if_else(accepted, 'accepted', 'invalid or stale'), diff))
 

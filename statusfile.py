@@ -83,6 +83,7 @@ class StatusFile(object):
 		# Write to the file
 		self.writeFile.seek(0)
 		json.dump(self.variables,self.writeFile)
+		self.writeFile.write('\n')
 		self.writeFile.flush()
 
 	def load(self):
