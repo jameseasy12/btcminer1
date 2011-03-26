@@ -16,7 +16,7 @@ class StatusFile(object):
 		if self.pid == None:
 			self.pid = os.getpid()
 		if self.startTime == None:
-			self.startTime = time.time()
+			self.startTime = int(time.time())
 
 		# Build file path
 		if path:
@@ -75,7 +75,7 @@ class StatusFile(object):
 			self.writeFile = open(self.path,'w')
 
 		# Update last save time
-		self.lastSave = time.time()
+		self.lastSave = int(time.time())
 		self.update('_LastSave',self.lastSave)
 
 		# Write to the file

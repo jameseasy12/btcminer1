@@ -130,7 +130,7 @@ class BitcoinMiner():
 			self.sayLine('checking %s <= %s', (hash, target))
 
 	def blockFound(self, hash, accepted, diff=0):
-		self.statushandler and self.statushandler.update('LastBlockFoundTime',timemodule.time())
+		self.statushandler and self.statushandler.update('LastBlockFoundTime',int(timemodule.time()))
 		self.statushandler and self.statushandler.update('LastBlockFoundDiff',diff)
 		self.statushandler and self.statushandler.increment('NumBlocksFound')
 		self.blkfound and subprocess.Popen(('%s %s %s diff %.2f' % (self.blkfound,hash,accepted and 'accepted' or 'invalid_or_stale',diff)).split(' '))
