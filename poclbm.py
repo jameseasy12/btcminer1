@@ -52,17 +52,18 @@ if options.logfile:
 	import logging
 	logger = logging.getLogger('bcm')
 	logger.setLevel(logging.INFO)
-	ch = logging.FileHandler(options.logfile)
-	ch.setLevel(logging.INFO)
+	fh = logging.FileHandler(options.logfile)
+	fh.setLevel(logging.INFO)
 	formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
-	ch.setFormatter(formatter)
-	logger.addHandler(ch)
+	fh.setFormatter(formatter)
+	logger.addHandler(fh)
 
 # Add statusfile support
 statushandler = None
 if options.statusfile:
 	from statusfile import *
 	statushandler = StatusFile(path=options.statusfile)
+	statushandler.update('Logfile',options.logfile)
 
 miner = None
 try:
