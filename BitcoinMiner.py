@@ -1,3 +1,4 @@
+import os
 import sys
 import socket
 import httplib
@@ -69,6 +70,7 @@ class BitcoinMiner():
 		self.logger = logger
 		self.statushandler = statushandler
 		self.blkfound = blkfound
+		self._hrupdates = 0
 
 		self.device = device
 		self.rate = max(float(rate), 0.1)
@@ -92,13 +94,13 @@ class BitcoinMiner():
 		self.headers = {"User-Agent": USER_AGENT, "Authorization": 'Basic ' + b64encode('%s:%s' % (user, password))}
 		self.connection = None
 
-	def say(self, format, args=()):
+	def say(self, format, args=(), logging=True):
 		with self.outputLock:
 			if self.verbose:
 				print '%s,' % datetime.now().strftime(TIME_FORMAT), format % args
 			else:
 				sys.stdout.write('\r                                                            \r%s' % (format % args))
-			self.logger and self.logger.info(format % args)
+			logging and self.logger and self.logger.info(format % args)
 			sys.stdout.flush()
 
 	def sayLine(self, format, args=()):
@@ -107,11 +109,14 @@ class BitcoinMiner():
 		self.say(format, args)
 
 	def exit(self):
+		self.logger and self.logger.info("Miner stopping; pid = %d, statusfile = %s" % (os.getpid(), self.statushandler and self.statushandler.path or None))
 		self.stop = True
 
 	def hashrate(self, rate):
 		self.statushandler and self.statushandler.update('HashRate',rate)
-		self.say('%s khash/s', rate)
+		self._hrupdates += 1
+		if self._hrupdates == 120: self._hrupdates = 0
+		self.say('%s khash/s', rate, logging=not self._hrupdates)		
 
 	def failure(self, message):
 		print '\n%s' % message
@@ -129,6 +134,7 @@ class BitcoinMiner():
 
 	def mine(self):
 		self.stop = False
+		self.logger and self.logger.info("Miner starting; pid = %d, statusfile = %s" % (os.getpid(), self.statushandler and self.statushandler.path or None))
 		longPollThread = Thread(target=self.longPollThread)
 		longPollThread.daemon = True
 		longPollThread.start()
