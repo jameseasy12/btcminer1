@@ -73,7 +73,7 @@ class BitcoinMiner():
 		self.statushandler = statushandler
 		self.blkfound = blkfound
 		self._hrupdates = 0
-
+	
 		self.device = device
 		self.rate = max(float(rate), 0.1)
 		self.askrate = max(int(askrate), 1)
@@ -139,6 +139,7 @@ class BitcoinMiner():
 	def mine(self):
 		self.stop = False
 		self.logger and self.logger.info("Miner starting; pid = %d, statusfile = %s" % (os.getpid(), self.statushandler and self.statushandler.path or None))
+		
 		longPollThread = Thread(target=self.longPollThread)
 		longPollThread.daemon = True
 		longPollThread.start()
