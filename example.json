@@ -1,0 +1,16 @@
+{
+	"host" : "",
+	"port" : "8332",
+	"user" : "",
+	"pass" : "",
+
+	"rate" : 1,
+	"device" : 0,
+	"frames" : 30,
+	"askrate" : 5,
+	"worksize" : -1,
+
+	"vectors" : false,
+	"verbose" : false,
+	"platform" : -1
+}
