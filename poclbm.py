@@ -4,6 +4,7 @@ import pyopencl as cl
 from time import sleep
 from BitcoinMiner import *
 from optparse import OptionParser
+import json
 
 parser = OptionParser(version=USER_AGENT)
 parser.add_option('-u', '--user',     dest='user',     default='bitcoin',   help='user name')
@@ -19,7 +20,36 @@ parser.add_option('-v', '--vectors',  dest='vectors',  action='store_true', help
 parser.add_option('-s', '--sleep',    dest='frameSleep', default=0,         help='sleep per frame in seconds, default 0', type='float')
 parser.add_option('--verbose',        dest='verbose',  action='store_true', help='verbose output, suitable for redirection to log file')
 parser.add_option('--platform',       dest='platform', default=-1,          help='use platform by id', type='int')
+parser.add_option('-c', '--config',   dest='config',   default='',          help='config file')
 (options, args) = parser.parse_args()
+
+if options.config:
+	f = open(options.config)
+	conf = json.load(f)
+	f.close()
+
+	if conf['user']:
+		options.user = conf['user']
+	if conf['pass']:
+		options.password = conf['pass']
+	if conf['host']:
+		options.host = conf['host']
+	if conf['port']:
+		options.port = int(conf['port'])
+	if conf['rate']:
+		options.rate = float(conf['rate'])
+	if conf['frames']:
+		options.frames = int(conf['frames'])
+	if conf['device'] >= 0:
+		options.device = int(conf['device'])
+	if conf['askrate']:
+		options.askrate = int(conf['askrate'])
+	if conf['worksize']:
+		options.worksize = int(conf['worksize'])
+	if conf['vectors']:
+		options.vectors = bool(conf['vectors'])
+	if conf['platform']:
+		options.platform = int(conf['platform'])
 
 if not -1 < options.port < 0xFFFF:
 	print 'invalid port'
