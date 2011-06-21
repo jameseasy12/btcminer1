@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import pyopencl as cl
+from miner import *
 from time import sleep
-from BitcoinMiner import *
 from optparse import OptionParser
 
 parser = OptionParser(version=USER_AGENT)
@@ -47,9 +47,9 @@ if (options.device == -1 or options.device >= len(devices)):
 		print '[%d]\t%s' % (i, devices[i].name)
 	sys.exit()
 
-miner = None
+client = None
 try:
-	miner = BitcoinMiner(	devices[options.device],
+	client = BitcoinMiner(	devices[options.device],
 							options.backup,
 							options.tolerance,
 							options.failback,
@@ -64,9 +64,9 @@ try:
 							options.vectors,
 							options.verbose,
 							options.frameSleep)
-	miner.mine()
+	client.mine()
 except KeyboardInterrupt:
 	print '\nbye'
 finally:
-	if miner: miner.exit()
+	if client: client.exit()
 sleep(1.1)

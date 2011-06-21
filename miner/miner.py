@@ -424,7 +424,7 @@ class BitcoinMiner():
 		if (self.device.extensions.find('cl_amd_media_ops') != -1):
 			self.defines += ' -DBITALIGN'
 
-		kernelFile = open('BitcoinMiner.cl', 'r')
+		kernelFile = open('kernel.cl', 'r')
 		kernel = kernelFile.read()
 		kernelFile.close()
 		m = md5(); m.update(''.join([self.device.platform.name, self.device.platform.version, self.device.name, self.defines, kernel]))
