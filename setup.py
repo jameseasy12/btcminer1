@@ -8,4 +8,5 @@ setup(name="gpu_miner",
 				'miner': ['*.cl']
 			},
       entry_points=dict(console_scripts=['gpu_miner=miner:main', 'gpu_miner-%s=miner:main' % sys.version[:3]]),
+			install_requires = ['numpy>=1.6.0','pyopencl==2011.1beta3', 'pycrypto>=2.3', 'jsonrpc>=0.99a01'],
       zip_safe=False)
