@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import pyopencl as cl
+import sys
 from miner import *
 from time import sleep
 from optparse import OptionParser
