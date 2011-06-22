@@ -33,7 +33,7 @@ easy_install virtualenv
 Now let's create our new virtual environment:
 
 ``` bash 
-virtualenv ~/.miner;
+virtualenv ~/.miner --distribute --no-site-packages;
 cd ~/.miner;
 source bin/activate
 ```
