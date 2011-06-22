@@ -4,8 +4,8 @@ Python Bitcoin GPU Miner
 This is a forked version of m0mchil's version.  I plan on doing some reworking to the client in the near future, for now this exists to be an easy installation version of the library.
 
 
-Installation (OSX)
----------------------------------------
+## Installation (OSX)
+
 
 I have only tested this on Mac OSX, but it should work on other *nix variants.
 
@@ -44,8 +44,7 @@ After that we can install the miner:
 
 ``` pip install https://github.com/unscene/bitcoin-gpu-miner/tarball/master ```
 
-Usage
----------------------------------------
+##Usage
 
 If you want detailed instructions run:
 
