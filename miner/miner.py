@@ -15,6 +15,7 @@ from urlparse import urlsplit
 from Queue import Queue, Empty
 from struct import pack, unpack, error
 from threading import Thread, RLock
+from pkg_resources import resource_string
 
 # Socket wrapper to enable socket.TCP_NODELAY and KEEPALIVE
 realsocket = socket.socket
@@ -424,9 +425,7 @@ class BitcoinMiner():
 		if (self.device.extensions.find('cl_amd_media_ops') != -1):
 			self.defines += ' -DBITALIGN'
 
-		kernelFile = open('kernel.cl', 'r')
-		kernel = kernelFile.read()
-		kernelFile.close()
+		kernel = resource_string('miner', 'kernel.cl')
 		m = md5(); m.update(''.join([self.device.platform.name, self.device.platform.version, self.device.name, self.defines, kernel]))
 		cacheName = '%s.elf' % m.hexdigest()
 		binary = None
