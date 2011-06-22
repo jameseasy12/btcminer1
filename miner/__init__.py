@@ -6,8 +6,6 @@ from miner import *
 from time import sleep
 from optparse import OptionParser
 
-from pkg_resources import resource_string
-
 parser = OptionParser(version=USER_AGENT)
 parser.add_option('-u', '--user',     dest='user',     default='bitcoin',   help='user name')
 parser.add_option('--pass',	          dest='password', default='password',  help='password')
