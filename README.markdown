@@ -37,17 +37,12 @@ virtualenv ~/.miner;
 cd ~/.miner;
 source bin/activate
 ```
- 
-Now the version of python and site-packages will be localized to this directory.  
 
-Lastly, we will need to install numpy.  Due to some weirdness with PyOpenCL and the way it expects to find numpy we can't list it as a dependency in setup.py so it needs to be done by hand.
+Lastly, we will need to install numpy.  Due to some weirdness with PyOpenCL and the way it expects to find numpy we can't list it as a dependency in setup.py so it needs to be done by hand:
 
-``` pip install numpy ```
-
-After that we can install the miner:
-
-``` 
-pip install https://github.com/unscene/bitcoin-gpu-miner/tarball/master
+```
+pip install numpy; 
+pip install https://github.com/unscene/bitcoin-gpu-miner/tarball/master;
 ```
 
 ##Usage
