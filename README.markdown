@@ -29,10 +29,11 @@ Let's get [virtualenv](http://www.virtualenv.org/en/latest/) up and running.  Th
 
 Now let's create our new virtual environment:
 
-``` virtualenv ~/.miner;
-    cd ~/.miner;
-    source bin/activate
- ```
+``` bash 
+virtualenv ~/.miner;
+cd ~/.miner;
+source bin/activate
+```
  
 Now the version of python and site-packages will be localized to this directory.  
 
