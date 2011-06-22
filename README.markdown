@@ -17,15 +17,18 @@ Pre-requisites:
 
 Let's get Boost installed.  My recommended way is through [brew](http://mxcl.github.com/homebrew/):
 
-``` ruby -e "$(curl -fsSL https://raw.github.com/gist/323731)";
-    brew install boost;
+``` bash
+ruby -e "$(curl -fsSL https://raw.github.com/gist/323731)";
+brew install boost;
 ```
 
 Site back and relax for this one, it took half an hour to compile on my brand new laptop.
 
 Let's get [virtualenv](http://www.virtualenv.org/en/latest/) up and running.  This is going to be used to isolate our install of the miner.
 
-``` easy_install virtualenv ```
+``` 
+easy_install virtualenv
+```
 
 Now let's create our new virtual environment:
 
@@ -43,16 +46,22 @@ Lastly, we will need to install numpy.  Due to some weirdness with PyOpenCL and 
 
 After that we can install the miner:
 
-``` pip install https://github.com/unscene/bitcoin-gpu-miner/tarball/master ```
+``` 
+pip install https://github.com/unscene/bitcoin-gpu-miner/tarball/master
+```
 
 ##Usage
 
 If you want detailed instructions run:
 
-``` gpu_miner --help ```
+```
+gpu_miner --help
+```
 
 To join a pooler like mining.bitcoin.cz you could issue the following on a *nix based system:
 
-``` nohup gpu_miner -o api.bitcoin.cz -p 8332 -u <username>.<password> --pass <password> -d 0 & ```
+``` bash 
+nohup gpu_miner -o api.bitcoin.cz -p 8332 -u <username>.<password> --pass <password> -d 0 & 
+```
 
 This will detach the process from the shell and you can go on your merry way.
