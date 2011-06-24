@@ -1,8 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import pyopencl as cl
+import sys
+from miner import *
 from time import sleep
-from BitcoinMiner import *
 from optparse import OptionParser
 
 parser = OptionParser(version=USER_AGENT)
@@ -22,51 +23,53 @@ parser.add_option('--tolerance',      dest='tolerance',default=2,           help
 parser.add_option('--failback',       dest='failback', default=2,           help='attempt to fail back to the primary pool every N getworks, default 2', type='int')
 parser.add_option('--verbose',        dest='verbose',  action='store_true', help='verbose output, suitable for redirection to log file')
 parser.add_option('--platform',       dest='platform', default=-1,          help='use platform by id', type='int')
-(options, args) = parser.parse_args()
 
-if not -1 < options.port < 0xFFFF:
-	print 'invalid port'
-	sys.exit()
+def main(initial_args=None):
+	(options, args) = parser.parse_args(initial_args)
 
-platforms = cl.get_platforms()
+	if not -1 < options.port < 0xFFFF:
+		print 'invalid port'
+		sys.exit()
+
+	platforms = cl.get_platforms()
 
 
-if options.platform >= len(platforms) or (options.platform == -1 and len(platforms) > 1):
-	print 'Wrong platform or more than one OpenCL platforms found, use --platform to select one of the following\n'
-	for i in xrange(len(platforms)):
-		print '[%d]\t%s' % (i, platforms[i].name)
-	sys.exit()
+	if options.platform >= len(platforms) or (options.platform == -1 and len(platforms) > 1):
+		print 'Wrong platform or more than one OpenCL platforms found, use --platform to select one of the following\n'
+		for i in xrange(len(platforms)):
+			print '[%d]\t%s' % (i, platforms[i].name)
+		sys.exit()
 
-if options.platform == -1:
-	options.platform = 0
+	if options.platform == -1:
+		options.platform = 0
 
-devices = platforms[options.platform].get_devices()
-if (options.device == -1 or options.device >= len(devices)):
-	print 'No device specified or device not found, use -d to specify one of the following\n'
-	for i in xrange(len(devices)):
-		print '[%d]\t%s' % (i, devices[i].name)
-	sys.exit()
+	devices = platforms[options.platform].get_devices()
+	if (options.device == -1 or options.device >= len(devices)):
+		print 'No device specified or device not found, use -d to specify one of the following\n'
+		for i in xrange(len(devices)):
+			print '[%d]\t%s' % (i, devices[i].name)
+		sys.exit()
 
-miner = None
-try:
-	miner = BitcoinMiner(	devices[options.device],
-							options.backup,
-							options.tolerance,
-							options.failback,
-							options.host,
-							options.user,
-							options.password,
-							options.port,
-							options.frames,
-							options.rate,
-							options.askrate,
-							options.worksize,
-							options.vectors,
-							options.verbose,
-							options.frameSleep)
-	miner.mine()
-except KeyboardInterrupt:
-	print '\nbye'
-finally:
-	if miner: miner.exit()
-sleep(1.1)
+	client = None
+	try:
+		client = BitcoinMiner(	devices[options.device],
+								options.backup,
+								options.tolerance,
+								options.failback,
+								options.host,
+								options.user,
+								options.password,
+								options.port,
+								options.frames,
+								options.rate,
+								options.askrate,
+								options.worksize,
+								options.vectors,
+								options.verbose,
+								options.frameSleep)
+		client.mine()
+	except KeyboardInterrupt:
+		print '\nbye'
+	finally:
+		if client: client.exit()
+	sleep(1.1)
