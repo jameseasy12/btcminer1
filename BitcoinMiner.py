@@ -124,6 +124,7 @@ class BitcoinMiner():
 		self.pool = None
 
 		self.queuesize = queuesize
+		self.currentworkpool = None
 
 		host = '%s:%s' % (host.replace('http://', ''), port)
 		self.primary = (user, password, host)
@@ -365,6 +366,7 @@ class BitcoinMiner():
 				except Empty: continue
 				else:
 					if not work: continue
+					self.currentworkpool = self.pool
 
 					noncesLeft = self.hashspace
 					data   = np.array(unpack('IIIIIIIIIIIIIIII', work['data'][128:].decode('hex')), dtype=np.uint32)
@@ -373,6 +375,9 @@ class BitcoinMiner():
 					state2 = partial(state, data, f)
 					calculateF(state, data, f, state2)
 			if self.lastBlock != work['data'][48:56]:
+				work = None
+				continue
+			if self.currentworkpool != self.pool:
 				work = None
 				continue
 
