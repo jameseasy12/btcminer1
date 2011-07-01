@@ -92,7 +92,7 @@ class NotAuthorized(Exception): pass
 class RPCError(Exception): pass
 
 class BitcoinMiner():
-	def __init__(self, device, backup, tolerance, failback, host, user, password, port=8332, frames=30, rate=1, askrate=5, worksize=-1, vectors=False, verbose=False, frameSleep=0):
+	def __init__(self, device, backup, tolerance, failback, host, user, password, port=8332, frames=30, rate=1, askrate=5, worksize=-1, vectors=False, verbose=False, frameSleep=0, queuesize=1):
 		(self.defines, self.rateDivisor, self.hashspace) = if_else(vectors, ('-DVECTORS', 500, 0x7FFFFFFF), ('', 1000, 0xFFFFFFFF))
 		self.defines += (' -DOUTPUT_SIZE=' + str(OUTPUT_SIZE))
 		self.defines += (' -DOUTPUT_MASK=' + str(OUTPUT_SIZE - 1))
@@ -122,6 +122,8 @@ class BitcoinMiner():
 		self.failback_getwork_count = 0
 		self.failback_attempt_count = 0
 		self.pool = None
+
+		self.queuesize = queuesize
 
 		host = '%s:%s' % (host.replace('http://', ''), port)
 		self.primary = (user, password, host)
@@ -184,7 +186,7 @@ class BitcoinMiner():
 			if self.stop: return
 			try:
 				with self.lock:
-					update = self.update = (self.update or (self.workQueue.qsize() <= 2) or time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.askrate))
+					update = self.update = (self.update or (self.workQueue.qsize() <= self.queuesize - 1) or time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.askrate))
 				if update:
 					work = self.getwork()
 					with self.lock:
