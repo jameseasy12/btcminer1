@@ -216,7 +216,7 @@ class BitcoinMiner():
 			if result['output'][i]:
 				h = hash(result['state'], result['data'][0], result['data'][1], result['data'][2], result['output'][i])
 				if h[7] != 0:
-					self.failure('Verification failed, check hardware!')
+ 					self.failure('Verification failed, check hardware!')
 				else:
 					self.diff1Found(bytereverse(h[6]), result['target'][6])
 					if belowOrEquals(h[:7], result['target'][:7]):
@@ -277,6 +277,9 @@ class BitcoinMiner():
 		self.sayLine('Setting pool %s @ %s', (user, host))
 		self.headers = {"User-Agent": USER_AGENT, "Authorization": 'Basic ' + b64encode('%s:%s' % (user, pwd))}
 		self.connection = None
+		with self.lock:
+			while not self.resultQueue.empty():
+				self.resultQueue.get(False)
 
 	def request(self, connection, url, headers, data=None):
 		result = response = None
