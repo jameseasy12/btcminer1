@@ -281,6 +281,8 @@ class BitcoinMiner():
 		with self.lock:
 			while not self.resultQueue.empty():
 				self.resultQueue.get(False)
+			while not self.workQueue.empty():
+				self.workQueue.get(False)
 
 	def request(self, connection, url, headers, data=None):
 		result = response = None
