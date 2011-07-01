@@ -184,7 +184,7 @@ class BitcoinMiner():
 			if self.stop: return
 			try:
 				with self.lock:
-					update = self.update = (self.update or time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.askrate))
+					update = self.update = (self.update or (self.workQueue.qsize() <= 2) or time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.askrate))
 				if update:
 					work = self.getwork()
 					with self.lock:
@@ -354,7 +354,7 @@ class BitcoinMiner():
 		while True:
 		        sleep(self.frameSleep)
 			if self.stop: return
-			if (not work) or (not self.workQueue.empty()):
+			if not work:
 				try:
 					work = self.workQueue.get(True, 1)
 				except Empty: continue
@@ -367,6 +367,9 @@ class BitcoinMiner():
 					target = np.array(unpack('IIIIIIII',         work['target'].decode('hex')),     dtype=np.uint32)
 					state2 = partial(state, data, f)
 					calculateF(state, data, f, state2)
+			if self.lastBlock != work['data'][48:56]:
+				work = None
+				continue
 
 			self.miner.search(	queue, (globalThreads, ), (self.worksize, ),
 								state[0], state[1], state[2], state[3], state[4], state[5], state[6], state[7],
@@ -413,7 +416,7 @@ class BitcoinMiner():
 					self.update = True
 					noncesLeft += 0xFFFFFFFFFFFF
 				elif 0xFFFFFFFFFFF < noncesLeft < 0xFFFFFFFFFFFF:
-					self.sayLine('warning: job finished, miner is idle')
+					if self.workQueue.empty(): self.sayLine('warning: job finished, miner is idle')
 					work = None
 			elif now - lastNTime > 1:
 				data[1] = bytereverse(bytereverse(data[1]) + 1)
