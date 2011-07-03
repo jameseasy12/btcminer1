@@ -126,10 +126,6 @@ class BitcoinMiner():
 		self.queuesize = self.options.queuesize
 		self.currentworkpool = None
 
-		host = '%s:%s' % (host.replace('http://', ''), port)
-		self.primary = (user, password, host)
-		self.setpool(self.primary)
-
 		self.postdata = {'method': 'getwork', 'id': 'json'}
 		self.connection = None
 
@@ -196,7 +192,7 @@ class BitcoinMiner():
 			if self.stop: return
 			try:
 				with self.lock:
-					update = self.update = (self.update or (self.workQueue.qsize() < self.options.queuesize - 1) time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.options.askrate))
+					update = self.update = (self.update or (self.workQueue.qsize() < self.options.queuesize - 1) or time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.options.askrate))
 				if update:
 					work = self.getwork()
 					if self.update:
