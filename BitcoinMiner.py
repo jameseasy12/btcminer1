@@ -198,10 +198,17 @@ class BitcoinMiner():
 					if self.update:
 						self.queueWork(work)
 
+				retry = []
 				while not self.resultQueue.empty():
 					result = self.resultQueue.get(False)
 					with self.lock:
 						rv = self.sendResult(result)
+					if rv is False:
+						retry.append(result)
+				if retry:
+					for result in retry:
+						self.resultQueue.put(result)	
+
 				sleep(1)
 			except Exception:
 				self.sayLine("Unexpected error:")
@@ -233,6 +240,9 @@ class BitcoinMiner():
 						if accepted != None:
 							self.blockFound(hashid, accepted)
 							self.shareCount[if_else(accepted, 1, 0)] += 1
+						else:
+							self.sayLine('%s, %s', (hashid, 'ERROR (will resend)'))
+							return False
 
 	def connect(self, host, timeout):
 		if self.proto == 'https':
