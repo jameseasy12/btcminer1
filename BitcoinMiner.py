@@ -192,7 +192,7 @@ class BitcoinMiner():
 			if self.stop: return
 			try:
 				with self.lock:
-					update = self.update = (self.update or (self.workQueue.qsize() < self.options.queuesize - 1) or time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.options.askrate))
+					update = self.update = (self.update or (self.workQueue.qsize() < self.queuesize - 1) or time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.options.askrate))
 				if update:
 					work = self.getwork()
 					if self.update:
