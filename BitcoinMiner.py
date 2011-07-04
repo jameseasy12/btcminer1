@@ -240,7 +240,7 @@ class BitcoinMiner():
 						if accepted != None:
 							self.blockFound(hashid, accepted)
 							self.shareCount[if_else(accepted, 1, 0)] += 1
-						else:
+						elif accepted == False:
 							self.sayLine('%s, %s', (hashid, 'ERROR (will resend)'))
 							return False
 
@@ -270,7 +270,9 @@ class BitcoinMiner():
 				self.backup_pool_index = 1
 				self.failback_getwork_count = 0
 				self.failback_attempt_count = 0
-			return result['result']
+			if result['result'] != None:
+				return result['result']
+			else: return False
 		except NotAuthorized:
 			self.failure('Wrong username or password')
 		except RPCError as e:
@@ -294,6 +296,7 @@ class BitcoinMiner():
 					pool = self.servers[self.backup_pool_index]
 					self.backup_pool_index += 1
 				self.setpool(pool)
+			return False
 
 	def setpool(self, pool):
 		self.pool = pool
