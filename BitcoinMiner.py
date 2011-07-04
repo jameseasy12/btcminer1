@@ -244,10 +244,10 @@ class BitcoinMiner():
 							self.sayLine('%s, %s', (hashid, 'ERROR (will resend)'))
 							return False
 
-	def connect(self, host, timeout):
-		if self.proto == 'https':
-			return httplib.HTTPSConnection(self.host, strict=True, timeout=timeout)
-		return httplib.HTTPConnection(self.host, strict=True, timeout=timeout)
+	def connect(self, host, timeout, proto='http'):
+		if proto == 'https':
+			return httplib.HTTPSConnection(host, strict=True, timeout=timeout)
+		return httplib.HTTPConnection(host, strict=True, timeout=timeout)
 
 	def getwork(self, data=None):
 		save_pool = None
@@ -260,7 +260,7 @@ class BitcoinMiner():
 					self.sayLine("Attempting to fail back to primary pool")
 				self.failback_getwork_count += 1
 			if not self.connection:
-				self.connection = self.connect(self.host, TIMEOUT)
+				self.connection = self.connect(self.host, TIMEOUT, self.proto)
 			if data is None:
 				self.getworkCount += 1
 			self.postdata['params'] = if_else(data, [data], [])
@@ -356,8 +356,8 @@ class BitcoinMiner():
 					if url == '': url = '/'
 				try:
 					if not connection:
-						connection = self.connect(host, LONG_POLL_TIMEOUT)
-						self.sayLine("LP connected to %s", host)
+						connection = self.connect(host, LONG_POLL_TIMEOUT, parsedUrl.scheme)
+						self.sayLine("LP connected to %s%s", host, url)
 					self.longPollActive = True
 					(connection, result) = self.request(connection, url, self.headers)
 					self.longPollActive = False
