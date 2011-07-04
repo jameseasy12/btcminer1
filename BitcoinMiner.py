@@ -357,7 +357,7 @@ class BitcoinMiner():
 				try:
 					if not connection:
 						connection = self.connect(host, LONG_POLL_TIMEOUT, parsedUrl.scheme)
-						self.sayLine("LP connected to %s%s", host, url)
+						self.sayLine("LP connected to %s%s", (host, url))
 					self.longPollActive = True
 					(connection, result) = self.request(connection, url, self.headers)
 					self.longPollActive = False
