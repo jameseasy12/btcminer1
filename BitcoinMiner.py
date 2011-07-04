@@ -330,7 +330,10 @@ class BitcoinMiner():
 			self.longPollURL = response.getheader('X-Long-Polling', '')
 			self.updateTime = response.getheader('X-Roll-NTime', '')
 			result = loads(response.read())
-			if result['error']:	raise RPCError(result['error']['message'])
+			if result['error']:
+				if result['error'].has_key('message'):
+					raise RPCError(result['error']['message'])
+				else: raise RPCError(result['error'])
 			return (connection, result)
 		finally:
 			if not result or not response or (response.version == 10 and response.getheader('connection', '') != 'keep-alive') or response.getheader('connection', '') == 'close':
