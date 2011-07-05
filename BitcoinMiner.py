@@ -123,6 +123,9 @@ class BitcoinMiner():
 		self.failback_attempt_count = 0
 		self.pool = None
 
+		self.queuesize = self.options.queuesize
+		self.currentworkpool = None
+
 		self.postdata = {'method': 'getwork', 'id': 'json'}
 		self.connection = None
 
@@ -189,16 +192,23 @@ class BitcoinMiner():
 			if self.stop: return
 			try:
 				with self.lock:
-					update = self.update = (self.update or time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.options.askrate))
+					update = self.update = (self.update or (self.workQueue.qsize() < self.queuesize - 1) or time() - self.lastWork > if_else(self.longPollActive, LONG_POLL_MAX_ASKRATE, self.options.askrate))
 				if update:
 					work = self.getwork()
 					if self.update:
 						self.queueWork(work)
 
+				retry = []
 				while not self.resultQueue.empty():
 					result = self.resultQueue.get(False)
 					with self.lock:
 						rv = self.sendResult(result)
+					if rv is False:
+						retry.append(result)
+				if retry:
+					for result in retry:
+						self.resultQueue.put(result)	
+
 				sleep(1)
 			except Exception:
 				self.sayLine("Unexpected error:")
@@ -230,11 +240,14 @@ class BitcoinMiner():
 						if accepted != None:
 							self.blockFound(hashid, accepted)
 							self.shareCount[if_else(accepted, 1, 0)] += 1
+						elif accepted == False:
+							self.sayLine('%s, %s', (hashid, 'ERROR (will resend)'))
+							return False
 
-	def connect(self, host, timeout):
-		if self.proto == 'https':
-			return httplib.HTTPSConnection(self.host, strict=True, timeout=timeout)
-		return httplib.HTTPConnection(self.host, strict=True, timeout=timeout)
+	def connect(self, host, timeout, proto='http'):
+		if proto == 'https':
+			return httplib.HTTPSConnection(host, strict=True, timeout=timeout)
+		return httplib.HTTPConnection(host, strict=True, timeout=timeout)
 
 	def getwork(self, data=None):
 		save_pool = None
@@ -247,7 +260,7 @@ class BitcoinMiner():
 					self.sayLine("Attempting to fail back to primary pool")
 				self.failback_getwork_count += 1
 			if not self.connection:
-				self.connection = self.connect(self.host, TIMEOUT)
+				self.connection = self.connect(self.host, TIMEOUT, self.proto)
 			if data is None:
 				self.getworkCount += 1
 			self.postdata['params'] = if_else(data, [data], [])
@@ -257,7 +270,9 @@ class BitcoinMiner():
 				self.backup_pool_index = 1
 				self.failback_getwork_count = 0
 				self.failback_attempt_count = 0
-			return result['result']
+			if result['result'] != None:
+				return result['result']
+			else: return False
 		except NotAuthorized:
 			self.failure('Wrong username or password')
 		except RPCError as e:
@@ -281,6 +296,7 @@ class BitcoinMiner():
 					pool = self.servers[self.backup_pool_index]
 					self.backup_pool_index += 1
 				self.setpool(pool)
+			return False
 
 	def setpool(self, pool):
 		self.pool = pool
@@ -290,6 +306,11 @@ class BitcoinMiner():
 		self.sayLine('Setting pool %s @ %s', (user, host))
 		self.headers = {"User-Agent": USER_AGENT, "Authorization": 'Basic ' + b64encode('%s:%s' % (user, pwd))}
 		self.connection = None
+		with self.lock:
+			while not self.resultQueue.empty():
+				self.resultQueue.get(False)
+			while not self.workQueue.empty():
+				self.workQueue.get(False)
 
 	def request(self, connection, url, headers, data=None):
 		result = response = None
@@ -309,7 +330,10 @@ class BitcoinMiner():
 			self.longPollURL = response.getheader('X-Long-Polling', '')
 			self.updateTime = response.getheader('X-Roll-NTime', '')
 			result = loads(response.read())
-			if result['error']:	raise RPCError(result['error']['message'])
+			if result['error']:
+				if result['error'].has_key('message'):
+					raise RPCError(result['error']['message'])
+				else: raise RPCError(result['error'])
 			return (connection, result)
 		finally:
 			if not result or not response or (response.version == 10 and response.getheader('connection', '') != 'keep-alive') or response.getheader('connection', '') == 'close':
@@ -332,8 +356,8 @@ class BitcoinMiner():
 					if url == '': url = '/'
 				try:
 					if not connection:
-						connection = self.connect(host, LONG_POLL_TIMEOUT)
-						self.sayLine("LP connected to %s", host)
+						connection = self.connect(host, LONG_POLL_TIMEOUT, parsedUrl.scheme)
+						self.sayLine("LP connected to %s%s", host, url)
 					self.longPollActive = True
 					(connection, result) = self.request(connection, url, self.headers)
 					self.longPollActive = False
@@ -367,12 +391,13 @@ class BitcoinMiner():
 		while True:
 		        sleep(self.options.frameSleep)
 			if self.stop: return
-			if (not work) or (not self.workQueue.empty()):
+			if not work:
 				try:
 					work = self.workQueue.get(True, 1)
 				except Empty: continue
 				else:
 					if not work: continue
+					self.currentworkpool = self.pool
 
 					noncesLeft = self.hashspace
 					data   = np.array(unpack('IIIIIIIIIIIIIIII', work['data'][128:].decode('hex')), dtype=np.uint32)
@@ -381,6 +406,12 @@ class BitcoinMiner():
 					targetQ= int(work['target'], 16) / 2**224
 					state2 = partial(state, data, f)
 					calculateF(state, data, f, state2)
+			if self.lastBlock != work['data'][48:56]:
+				work = None
+				continue
+			if self.currentworkpool != self.pool:
+				work = None
+				continue
 
 			self.miner.search(	queue, (globalThreads, ), (self.options.worksize, ),
 								state[0], state[1], state[2], state[3], state[4], state[5], state[6], state[7],
@@ -439,7 +470,7 @@ class BitcoinMiner():
 					self.update = True
 					noncesLeft += 0xFFFFFFFFFFFF
 				elif 0xFFFFFFFFFFF < noncesLeft < 0xFFFFFFFFFFFF:
-					self.sayLine('warning: job finished, miner is idle')
+					if self.workQueue.empty(): self.sayLine('warning: job finished, miner is idle')
 					work = None
 			elif now - lastNTime > 1:
 				data[1] = bytereverse(bytereverse(data[1]) + 1)
