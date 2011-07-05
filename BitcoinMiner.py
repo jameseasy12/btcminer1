@@ -237,7 +237,7 @@ class BitcoinMiner():
 						d = ''.join([d[:136], pack('I', long(result['data'][1])).encode('hex'), d[144:152], pack('I', long(result['output'][i])).encode('hex'), d[160:]])
 						hashid = pack('I', long(h[6])).encode('hex')
 						accepted = self.getwork(d)
-						if accepted != None:
+						if accepted != None and accepted is not False:
 							self.blockFound(hashid, accepted)
 							self.shareCount[if_else(accepted, 1, 0)] += 1
 						elif accepted == False:
@@ -272,7 +272,6 @@ class BitcoinMiner():
 				self.failback_attempt_count = 0
 			if result['result'] != None:
 				return result['result']
-			else: return False
 		except NotAuthorized:
 			self.failure('Wrong username or password')
 		except RPCError as e:
