@@ -270,8 +270,7 @@ class BitcoinMiner():
 				self.backup_pool_index = 1
 				self.failback_getwork_count = 0
 				self.failback_attempt_count = 0
-			if result['result'] != None:
-				return result['result']
+			return result['result']
 		except NotAuthorized:
 			self.failure('Wrong username or password')
 		except RPCError as e:
