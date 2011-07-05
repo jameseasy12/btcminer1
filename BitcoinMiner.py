@@ -240,7 +240,7 @@ class BitcoinMiner():
 						if accepted != None and accepted is not False:
 							self.blockFound(hashid, accepted)
 							self.shareCount[if_else(accepted, 1, 0)] += 1
-						elif accepted == False:
+						elif accepted is False:
 							self.sayLine('%s, %s', (hashid, 'ERROR (will resend)'))
 							return False
 
