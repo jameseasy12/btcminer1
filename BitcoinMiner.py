@@ -256,7 +256,15 @@ class BitcoinMiner():
 				self.failback_attempt_count = 0
 			return result['result']
 		except NotAuthorized:
-			self.failure('Wrong username or password')
+			self.say('Wrong username or password')
+			if self.backup_pool_index >= len(self.servers):
+				self.sayLine("No more backup pools left. Using primary and starting over.")
+				pool = self.servers[0]
+				self.backup_pool_index = 1
+			else:
+				pool = self.servers[self.backup_pool_index]
+				self.backup_pool_index += 1
+			self.setpool(pool)
 		except RPCError as e:
 			self.say('%s', e)
 		except (IOError, httplib.HTTPException, ValueError):
