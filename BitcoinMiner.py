@@ -155,18 +155,21 @@ class BitcoinMiner():
 	def say(self, format, args=(), sayQuiet=False):
 		if self.options.quiet and not sayQuiet: return
 		with self.outputLock:
-			p = format % args
-			pool = self.pool[4]+' ' if self.pool else ''
+			outp = format % args
+			if self.options.outStamp:
+				outp = datetime.now().strftime(TIME_FORMAT) + ' ' + outp
+			if self.pool:
+				outp = self.pool[4] + ' ' + outp
 			if self.options.verbose:
-				print '%s%s,' % (pool, datetime.now().strftime(TIME_FORMAT)), p
+				print outp
 			else:
-				sys.stdout.write('\r%s\r%s%s' % (' '*80, pool, p))
+				sys.stdout.write('\r%s\r%s' % (' '*80, outp))
 			sys.stdout.flush()
 
 	def sayLine(self, format, args=()):
 		if not self.options.verbose:
-			format = '%s, %s\n' % (datetime.now().strftime(TIME_FORMAT), format)
-		self.say(format, args)
+			self.say(format + '\n', args)
+		else:   self.say(format       , args)
 		
 	def sayQuiet(self, format, args=()):
 		self.say(format, args, True)
