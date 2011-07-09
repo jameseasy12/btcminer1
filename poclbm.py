@@ -10,6 +10,7 @@ usage = "usage: %prog [OPTION]... SERVER[#tag]...\nSERVER is one or more [http[s
 parser = OptionParser(version=USER_AGENT, usage=usage)
 parser.add_option('--verbose',        dest='verbose',    action='store_true', help='verbose output, suitable for redirection to log file')
 parser.add_option('-q', '--quiet',    dest='quiet',      action='store_true', help='suppress all output except hash rate display')
+parser.add_option('-T', '--no-timestamp', dest='outStamp',  action='store_false', help='removes timestamp from output', default=True)
 
 group = OptionGroup(parser, "Miner Options")
 group.add_option('-r', '--rate',      dest='rate',       default=1,           help='hash rate display interval in seconds, default=1', type='float')
