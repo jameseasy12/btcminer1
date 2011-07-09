@@ -5,6 +5,7 @@ from time import sleep
 from BitcoinMiner import *
 from optparse import OptionParser
 from optparse import OptionGroup
+from optparse import SUPPRESS_HELP
 
 usage = "usage: %prog [OPTION]... SERVER[#tag]...\nSERVER is one or more [http[s]://]user:pass@host:port          (required)\n[#tag] is a per SERVER user friendly name displayed in stats   (optional)"
 parser = OptionParser(version=USER_AGENT, usage=usage)
@@ -29,7 +30,22 @@ group.add_option('-s', '--sleep',    dest='frameSleep', default=0,           hel
 group.add_option('-v', '--vectors',  dest='vectors',    action='store_true', help='use vectors')
 parser.add_option_group(group)
 
+parser.add_option('-u', '--user',     dest='depUser', default=None,        help=SUPPRESS_HELP)
+parser.add_option(      '--pass',     dest='depPass', default=None,        help=SUPPRESS_HELP)
+parser.add_option('-o', '--host',     dest='depHost', default='127.0.0.1', help=SUPPRESS_HELP)
+parser.add_option(      '--port',     dest='depPort', default='8332',      help=SUPPRESS_HELP)
+parser.add_option(      '--backup',   dest='depBack', default=None,        help=SUPPRESS_HELP)
+parser.add_option(      '--servers',  dest='depServ', default=None,        help=SUPPRESS_HELP)
+
 (options, options.servers) = parser.parse_args()
+
+# adds deprecated options to options.servers
+if options.depUser is not None and options.depPass is not None:
+	options.servers.insert(0, "%s:%s@%s:%s" % (options.depUser, options.depPass, options.depHost, options.depPort))
+if options.depServ is not None:
+	for serv in options.depServ.split(','): options.servers.append(serv)
+if options.depBack is not None:
+	for back in options.depBack.split(','): options.servers.append(back)
 
 
 platforms = cl.get_platforms()
