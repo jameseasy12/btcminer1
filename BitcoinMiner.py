@@ -157,14 +157,14 @@ class BitcoinMiner():
 		with self.outputLock:
 			p = format % args
 			pool = self.pool[4]+' ' if self.pool else ''
-			if self.options.verbose:
+			if self.options.clean:
 				print '%s%s,' % (pool, datetime.now().strftime(TIME_FORMAT)), p
 			else:
 				sys.stdout.write('\r%s\r%s%s' % (' '*80, pool, p))
 			sys.stdout.flush()
 
 	def sayLine(self, format, args=()):
-		if not self.options.verbose:
+		if not self.options.clean:
 			format = '%s, %s\n' % (datetime.now().strftime(TIME_FORMAT), format)
 		self.say(format, args)
 		
@@ -186,7 +186,7 @@ class BitcoinMiner():
 		self.exit()
 
 	def diff1Found(self, hash, target):
-		if self.options.verbose and target < 0xFFFF0000L:
+		if self.options.clean and target < 0xFFFF0000L:
 			self.sayLine('checking %s <= %s', (hash, target))
 
 	def blockFound(self, hash, accepted):

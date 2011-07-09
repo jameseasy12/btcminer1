@@ -5,7 +5,7 @@ SERVER is one or more [http[s]://]user:pass@host:port          (required)
 Options:
   --version             show program's version number and exit
   -h, --help            show this help message and exit
-  --verbose             verbose output, suitable for redirection to log file
+  -c, --clean           clean output, suitable for redirection to log file
   -q, --quiet           suppress all output except hash rate display
   --no-server-failbacks
                         disable using failback hosts provided by server
