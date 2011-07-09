@@ -288,18 +288,24 @@ class BitcoinMiner():
 				self.failback_getwork_count = 0
 				self.failback_attempt_count = 0
 			return result['result']
-		except NotAuthorized:
-			self.failure('Wrong username or password')
 		except RPCError as e:
 			self.say('%s', e)
-		except (IOError, httplib.HTTPException, ValueError):
+		except (IOError, httplib.HTTPException, ValueError, NotAuthorized) as e:
 			if save_pool:
 				self.failback_attempt_count += 1
 				self.setpool(save_pool)
 				self.sayLine('Still unable to reconnect to primary pool (attempt %s), failing over', self.failback_attempt_count)
 				self.failback_getwork_count = 0
 				return
-			self.say('Problems communicating with bitcoin RPC %s %s', (self.errors, self.options.tolerance))
+
+			self.say('%s %s %s', (
+					if_else((type(e).__name__ == "NotAuthorized"),
+						'Wrong username or password',
+						'Problems communicating with bitcoin RPC'),
+					self.errors,
+					self.options.tolerance)
+				)
+
 			self.errors += 1
 			if self.errors > self.options.tolerance+1:
 				self.errors = 0
