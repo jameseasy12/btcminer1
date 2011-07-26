@@ -136,8 +136,13 @@ class HttpTransport(Transport):
 
 	def long_poll_thread(self):
 		last_host = None
+		times = []
 		while True:
-			sleep(1)
+			# limit to 5 in the last 5 seconds
+			times.append(time())
+			if len(times) > 5:
+				time_5_ago = times.pop(0)
+				sleep(max(0, min(1, time_5_ago + 5 - time())))
 			url = self.long_poll_url
 			if url != '':
 				proto = self.proto
