@@ -4,10 +4,12 @@ from hashlib import md5
 from log import *
 from sha256 import *
 from struct import pack
+from tempfile import gettempdir
 from threading import Thread
 from time import sleep, time
 from util import *
 import log
+import os.path as path
 import pyopencl as cl
 
 
@@ -165,7 +167,7 @@ class BitcoinMiner():
 		kernel = kernel_file.read()
 		kernel_file.close()
 		m = md5(); m.update(''.join([self.device.platform.name, self.device.platform.version, self.device.name, self.defines, kernel]))
-		cache_name = '%s.elf' % m.hexdigest()
+		cache_name = path.join(gettempdir(), 'poclbm-%s.elf' % m.hexdigest())
 		binary = None
 		try:
 			binary = open(cache_name, 'rb')
