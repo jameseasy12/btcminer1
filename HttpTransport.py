@@ -136,13 +136,7 @@ class HttpTransport(Transport):
 
 	def long_poll_thread(self):
 		last_host = None
-		times = []
 		while True:
-			# limit to 5 in the last 5 seconds
-			times.append(time())
-			if len(times) > 5:
-				time_5_ago = times.pop(0)
-				sleep(max(0, min(1, time_5_ago + 5 - time())))
 			url = self.long_poll_url
 			if url != '':
 				proto = self.proto
@@ -170,12 +164,17 @@ class HttpTransport(Transport):
 					say_line('long poll: new block %s%s', (result['result']['data'][56:64], result['result']['data'][48:56]))
 				except NotAuthorized:
 					say_line('long poll: Wrong username or password')
+					sleep(.5)
 				except RPCError as e:
 					say_line('long poll: %s', e)
+					sleep(.5)
 				except (IOError, httplib.HTTPException, ValueError):
 					say_line('long poll: IO error')
 					#traceback.print_exc()
 					self.close_lp_connection()
+					sleep(.5)
+			else:
+				sleep(.5)
 
 	def stop(self):
 		self.should_stop = True
