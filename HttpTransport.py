@@ -183,7 +183,7 @@ class HttpTransport(Transport):
 	def set_server(self, server):
 		super(HttpTransport, self).set_server(server)
 		user, pwd = server[1:3]
-		self.headers = {"User-Agent": self.user_agent, "Authorization": 'Basic ' + b64encode('%s:%s' % (user, pwd))}
+		self.headers = {"User-Agent": self.user_agent, "Authorization": 'Basic ' + b64encode('%s:%s' % (user, pwd)), 'X-Work-Identifier': 1}
 		self.long_poll_url = ''
 		if self.connection:
 			self.connection.close()
@@ -215,6 +215,7 @@ class HttpTransport(Transport):
 			job.f          = np.zeros(8, np.uint32)
 			job.state2     = partial(job.state, job.merkle_end, job.time, job.difficulty, job.f)
 			job.targetQ    = 2**256 / int(''.join(list(chunks(work['target'], 2))[::-1]), 16)
+			job.identifier = (1, work['identifier']) if 'identifier' in work else (0, job.header[25:29])
 
 			calculateF(job.state, job.merkle_end, job.time, job.difficulty, job.f, job.state2)
 

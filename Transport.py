@@ -117,8 +117,8 @@ class Transport(object):
 			self.miner.work_queue.put(work)
 			if work:
 				self.update = False; self.last_work = time()
-				if self.last_block != work.header[25:29]:
-					self.last_block = work.header[25:29]
+				if self.last_block != work.identifier:
+					self.last_block = work.identifier
 					self.clear_result_queue()
 
 	def clear_result_queue(self):
