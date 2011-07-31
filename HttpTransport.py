@@ -183,7 +183,7 @@ class HttpTransport(Transport):
 	def set_server(self, server):
 		super(HttpTransport, self).set_server(server)
 		user, pwd = server[1:3]
-		self.headers = {"User-Agent": self.user_agent, "Authorization": 'Basic ' + b64encode('%s:%s' % (user, pwd)), 'X-Work-Identifier': 1}
+		self.headers = {"User-Agent": self.user_agent, "Authorization": 'Basic ' + b64encode('%s:%s' % (user, pwd)), 'X-Work-Identifier': '1'}
 		self.long_poll_url = ''
 		if self.connection:
 			self.connection.close()
