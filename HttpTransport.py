@@ -137,7 +137,6 @@ class HttpTransport(Transport):
 	def long_poll_thread(self):
 		last_host = None
 		while True:
-			sleep(1)
 			url = self.long_poll_url
 			if url != '':
 				proto = self.proto
@@ -166,12 +165,17 @@ class HttpTransport(Transport):
 						say_line('long poll: new block %s%s', (result['result']['data'][56:64], result['result']['data'][48:56]))
 				except NotAuthorized:
 					say_line('long poll: Wrong username or password')
+					sleep(.5)
 				except RPCError as e:
 					say_line('long poll: %s', e)
+					sleep(.5)
 				except (IOError, httplib.HTTPException, ValueError):
 					say_line('long poll: IO error')
 					#traceback.print_exc()
 					self.close_lp_connection()
+					sleep(.5)
+			else:
+				sleep(.5)
 
 	def stop(self):
 		self.should_stop = True
@@ -180,7 +184,7 @@ class HttpTransport(Transport):
 	def set_server(self, server):
 		super(HttpTransport, self).set_server(server)
 		user, pwd = server[1:3]
-		self.headers = {"User-Agent": self.user_agent, "Authorization": 'Basic ' + b64encode('%s:%s' % (user, pwd))}
+		self.headers = {"User-Agent": self.user_agent, "Authorization": 'Basic ' + b64encode('%s:%s' % (user, pwd)), 'X-Work-Identifier': '1'}
 		self.long_poll_url = ''
 		if self.connection:
 			self.connection.close()
@@ -212,6 +216,7 @@ class HttpTransport(Transport):
 			job.f          = np.zeros(8, np.uint32)
 			job.state2     = partial(job.state, job.merkle_end, job.time, job.difficulty, job.f)
 			job.targetQ    = 2**256 / int(''.join(list(chunks(work['target'], 2))[::-1]), 16)
+			job.identifier = (1, work['identifier']) if 'identifier' in work else (0, job.header[25:29])
 
 			calculateF(job.state, job.merkle_end, job.time, job.difficulty, job.f, job.state2)
 
