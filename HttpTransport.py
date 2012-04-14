@@ -182,7 +182,7 @@ class HttpTransport(Transport):
 					if host != last_host: self.close_lp_connection()
 					self.lp_connection, changed = self.ensure_connected(self.lp_connection, proto, host, self.long_poll_timeout)
 					if changed:
-						say_line("LP connected to %s", self.server[4])
+						say_line("Long Poll: Connected to %s://%s%s", (proto, host, url))
 						last_host = host
 					
 					self.long_poll_active = True
@@ -200,7 +200,7 @@ class HttpTransport(Transport):
 					say_line('long poll: %s', e)
 					sleep(.5)
 				except (IOError, httplib.HTTPException, ValueError, socks.ProxyError):
-					say_line('long poll: IO error')
+					#say_line('long poll: IO error')
 					#traceback.print_exc()
 					self.close_lp_connection()
 					sleep(.5)
