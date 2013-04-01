@@ -5,6 +5,7 @@ from struct import pack, unpack
 from threading import RLock
 from time import time, sleep
 from util import if_else, Object, chunks, bytereverse, belowOrEquals, uint32
+import GetworkSource
 import StratumSource
 import log
 import socks
@@ -264,7 +265,6 @@ class Switch(object):
 	def server_source(self):
 		if not hasattr(self.server(), 'source'):
 			if self.server().proto == 'http':
-				import GetworkSource
 				getwork_source = GetworkSource.GetworkSource(self)
 				say_line('checking for stratum...')
 
