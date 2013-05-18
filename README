@@ -27,10 +27,10 @@ Options:
     -b FAILBACK, --failback=FAILBACK
                         attempt to fail back to the primary pool after N
                         seconds, default 60
-    --cutoff_temp=CUTOFF_TEMP
+    --cutoff-temp=CUTOFF_TEMP
                         (requires github.com/mjmvisser/adl3) temperature at
                         which to skip kernel execution, in C, default=95
-    --cutoff_interval=CUTOFF_INTERVAL
+    --cutoff-interval=CUTOFF_INTERVAL
                         (requires adl3) how long to not execute calculations
                         if CUTOFF_TEMP is reached, in seconds, default=0.01
     --no-server-failbacks
