@@ -42,7 +42,7 @@ msgstr ""
 "    https://github.com/Kiv/poclbm\n"
 "\n"
 "Sollte dir die Software gefallen, unterstütze die\n"
-"Weiternticklung durch eine freiwillige Spende an:\n"
+"Weiterentwicklung durch eine freiwillige Spende an:\n"
 "\n"
 "%(address)s\n"
 "\n"
@@ -462,7 +462,7 @@ msgstr "Deine Einstellungen speichern"
 
 #: guiminer.py:1592
 msgid "&Load settings"
-msgstr "Einstallungen &laden"
+msgstr "Einstellungen &laden"
 
 #: guiminer.py:1592
 msgid "Load stored settings"
