@@ -138,7 +138,7 @@ msgstr "Velocidade"
 
 #: guiminer.py:306
 msgid "Accepted"
-msgstr "Aceptado"
+msgstr "Aceite"
 
 #: guiminer.py:307
 msgid "Stale"
@@ -205,7 +205,7 @@ msgstr "Dispositivo:"
 
 #: guiminer.py:534
 msgid "No OpenCL devices"
-msgstr "No há dispositivos OpenCL"
+msgstr "Não há dispositivos OpenCL"
 
 #: guiminer.py:535
 msgid "Extra flags:"
